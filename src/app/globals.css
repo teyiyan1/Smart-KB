@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* Shopee2021：优先本机已安装字体；可将 woff2 放到 public/fonts/ 以在网页中加载 */
+@font-face {
+  font-family: "Shopee2021";
+  src:
+    local("Shopee2021"),
+    local("Shopee 2021"),
+    url("/fonts/Shopee2021-Regular.woff2") format("woff2"),
+    url("/fonts/Shopee2021-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shopee2021";
+  src:
+    local("Shopee2021 Bold"),
+    local("Shopee2021-Bold"),
+    url("/fonts/Shopee2021-Bold.woff2") format("woff2"),
+    url("/fonts/Shopee2021-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shopee2021";
+  src:
+    local("Shopee2021 Medium"),
+    url("/fonts/Shopee2021-Medium.woff2") format("woff2"),
+    url("/fonts/Shopee2021-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Shopee2021", ui-sans-serif, system-ui, sans-serif;
+
+  /* Design tokens — synced with CLAUDE.md spec */
+  --color-primary: #ee4d2d;
+  --color-link: #2673dd;
+  --color-error: #ff4742;
+  --color-text: rgba(0, 0, 0, 0.85);
+  --color-text-secondary: rgba(0, 0, 0, 0.65);
+  --color-text-disabled: rgba(0, 0, 0, 0.25);
+  --color-bg: #f7f7f7;
+  --color-border: #e8e8e8;
+
+  /* Spacing tokens */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Layout tokens */
+  --nav-header-height: 56px;
+  --page-header-height: 56px;
+  --sidebar-width: 280px;
+  --sidebar-width-small: 240px;
+  --modal-top-margin: 120px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    font-family: "Shopee2021", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  body {
+    @apply font-sans antialiased;
+  }
+}
+
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: #cbd5e1;
+  border: 1px solid #fff;
+}
+
+/* 自定义节点：hover 时不在 React Flow 外层包一层描边/阴影（内层卡片自行控制样式） */
+.react-flow .react-flow__node-agent.selectable:hover,
+.react-flow .react-flow__node-start.selectable:hover,
+.react-flow .react-flow__node-answer.selectable:hover,
+.react-flow .react-flow__node-clarification.selectable:hover {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(#334155 1px, transparent 1px);
+}
+
+@keyframes handle-halo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
