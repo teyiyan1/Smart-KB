@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 interface SolutionRow {
   id: string;
   icon: 'flow' | 'doc';
   title: string;
   subtitle: string;
-  status: 'Live' | 'Draft';
+  status: 'Live' | 'Archive' | 'Offline' | 'Publish In Review' | 'Rejected' | 'Draft' | 'Publish';
   relatedIssue: string;
   updatedTime: string;
   isAfterEDD?: boolean;
@@ -13,11 +13,24 @@ interface SolutionRow {
 
 type TabKey = 'all' | 'sop' | 'qa';
 
+type StatusFilterValue = 'all' | 'Live' | 'Archive' | 'Offline' | 'Publish In Review' | 'Rejected' | 'Draft' | 'Publish';
+
+const STATUS_FILTER_OPTIONS: { value: StatusFilterValue; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'Live', label: 'Live' },
+  { value: 'Archive', label: 'Archive' },
+  { value: 'Offline', label: 'Offline' },
+  { value: 'Publish In Review', label: 'Publish In Review' },
+  { value: 'Rejected', label: 'Rejected' },
+  { value: 'Draft', label: 'Draft' },
+  { value: 'Publish', label: 'Publish' },
+];
+
 const ROWS: SolutionRow[] = [
   {
     id: '1',
     icon: 'flow',
-    title: '2025 Feature Request Management S...',
+    title: '2025 Feature Request Management SOP',
     subtitle: '2025 Shopee Marketplace Line of Business P...',
     status: 'Live',
     relatedIssue: 'Status is deliver...',
@@ -26,9 +39,9 @@ const ROWS: SolutionRow[] = [
   {
     id: '2',
     icon: 'flow',
-    title: 'L3 Return/Refund - Check On Refund...',
+    title: 'L3 Return/Refund - Check On Refund Status',
     subtitle: '2025 Shopee Marketplace Line of Business P...',
-    status: 'Live',
+    status: 'Archive',
     relatedIssue: 'How to use deli...',
     updatedTime: '2024-08-12 18:20',
   },
@@ -37,7 +50,7 @@ const ROWS: SolutionRow[] = [
     icon: 'flow',
     title: 'After EDD',
     subtitle: '2025 Shopee Marketplace Line of Business P...',
-    status: 'Live',
+    status: 'Offline',
     relatedIssue: 'After EDD',
     updatedTime: '2024-08-12 18:20',
     isAfterEDD: true,
@@ -47,25 +60,34 @@ const ROWS: SolutionRow[] = [
     icon: 'doc',
     title: 'Claim Lost RTS Parcel',
     subtitle: '2025 Shopee Marketplace Line of Business P...',
-    status: 'Draft',
+    status: 'Publish In Review',
     relatedIssue: 'Claim Lost RTS P...',
     updatedTime: '2024-08-12 18:20',
   },
   {
     id: '5',
-    icon: 'flow',
-    title: 'Claim Lost RTS Parcel',
+    icon: 'doc',
+    title: 'Check Delivery Status',
     subtitle: '2025 Shopee Marketplace Line of Business P...',
-    status: 'Live',
+    status: 'Rejected',
     relatedIssue: '-',
     updatedTime: '2024-08-12 18:20',
   },
   {
     id: '6',
     icon: 'flow',
-    title: '2025 Feature Request Management S...',
+    title: 'Contact Delivery Rider',
     subtitle: '2025 Shopee Marketplace Line of Business P...',
-    status: 'Live',
+    status: 'Draft',
+    relatedIssue: '-',
+    updatedTime: '2024-08-12 18:20',
+  },
+  {
+    id: '7',
+    icon: 'flow',
+    title: '2025 Feature Request Management SOP',
+    subtitle: '2025 Shopee Marketplace Line of Business P...',
+    status: 'Publish',
     relatedIssue: '-',
     updatedTime: '2024-08-12 18:20',
   },
@@ -89,14 +111,16 @@ const LEFT_CATEGORIES = [
   { name: 'Logistics', count: 45, hasChildren: true },
 ];
 
-const LOGISTICS_CHILDREN = [
+type LogisticsChild = { label: string; count?: number; isActive?: boolean };
+
+const LOGISTICS_CHILDREN: LogisticsChild[] = [
   { label: 'Change Detail' },
   { label: 'Contact delivery rider' },
   { label: 'Status is delivered but not yet received' },
   { label: 'How to use delivery by Locker' },
   { label: 'Check delivery status' },
   { label: 'Order cancellation', count: 0 },
-  { label: 'Order/Shop product Line', count: 0, isActive: true },
+  { label: 'Order/Shop product Line', count: 0 },
 ];
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -104,6 +128,70 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'sop', label: 'Smart SOP' },
   { key: 'qa', label: 'General QA' },
 ];
+
+/** 列表模糊搜索：名称 / 描述 / 关联 Issue；不区分大小写；多词为 AND；单串额外支持子序列匹配 */
+function matchesSolutionSearch(row: SolutionRow, raw: string): boolean {
+  const q = raw.trim().toLowerCase();
+  if (!q) return true;
+
+  const title = row.title.toLowerCase();
+  const subtitle = row.subtitle.toLowerCase();
+  const related = row.relatedIssue.toLowerCase();
+  const blob = `${title} ${subtitle} ${related}`;
+
+  const tokens = q.split(/\s+/).filter(Boolean);
+  if (tokens.length > 1) {
+    return tokens.every((t) => blob.includes(t));
+  }
+
+  const single = tokens[0] ?? q;
+  if (blob.includes(single)) return true;
+
+  const merged = `${title}${subtitle}`.replace(/\s/g, '');
+  const needle = single.replace(/\s/g, '');
+  if (needle.length === 0) return true;
+  let j = 0;
+  for (let i = 0; i < merged.length && j < needle.length; i++) {
+    if (merged[i] === needle[j]) j++;
+  }
+  return j === needle.length;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 检索词在文案中以主题色 #ee4d2d 高亮（连续子串；多词分别匹配） */
+function highlightSearchTerms(text: string, raw: string): React.ReactNode {
+  const q = raw.trim();
+  if (!q) return text;
+
+  const tokens = [...new Set(q.split(/\s+/).filter(Boolean))];
+  if (tokens.length === 0) return text;
+
+  const escaped = tokens.map(escapeRegExp).sort((a, b) => b.length - a.length);
+  try {
+    const re = new RegExp(`(${escaped.join('|')})`, 'gi');
+    const parts = text.split(re);
+    return (
+      <>
+        {parts.map((part, i) => {
+          if (part === '') return null;
+          const hit = tokens.some((t) => part.toLowerCase() === t.toLowerCase());
+          return hit ? (
+            <span key={i} className="font-medium text-[#ee4d2d]">
+              {part}
+            </span>
+          ) : (
+            <span key={i}>{part}</span>
+          );
+        })}
+      </>
+    );
+  } catch {
+    return text;
+  }
+}
 
 // Figma 导航图标资源（有效期 7 天）
 const FIGMA_ICON_KB_DEFAULT  = 'https://www.figma.com/api/mcp/asset/6dd0d78e-d05f-4de4-a5f0-5ebf7a24f523';
@@ -198,7 +286,7 @@ const CONTENT_FILTER_ICON = 'https://www.figma.com/api/mcp/asset/65f8360a-0e29-4
 const CONTENT_TABLE_ICON  = 'https://www.figma.com/api/mcp/asset/db675947-ea90-4b14-a152-c361e158f114';
 const CONTENT_SORTER_UP   = 'https://www.figma.com/api/mcp/asset/7b2fc693-16f2-4230-bf16-979a35f6cd02';
 const CONTENT_SORTER_DOWN = 'https://www.figma.com/api/mcp/asset/7b2bded6-a3e8-4669-bac6-a5c075533557';
-const CONTENT_MORE_VEC    = 'https://www.figma.com/api/mcp/asset/6634a6f2-d906-4849-bd0b-be58e81abeb9';
+const CONTENT_MORE_VEC    = 'https://www.figma.com/api/mcp/asset/55010b2f-b495-4b96-b374-fcf53b26ff38';
 const CONTENT_FLOW_ICON   = 'https://www.figma.com/api/mcp/asset/72d1a0d2-99f1-4470-a387-a8bffdca6650';
 const CONTENT_FAQ_VEC1    = 'https://www.figma.com/api/mcp/asset/387819a0-e34f-4bec-af71-d7140e8d35ab';
 const CONTENT_FAQ_VEC2    = 'https://www.figma.com/api/mcp/asset/1a26be56-4618-40f5-9d27-d97a23b75d12';
@@ -325,14 +413,56 @@ interface Props {
 
 export default function SolutionManagementPage({ onEnterCanvas }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLogisticsOpen, setIsLogisticsOpen] = useState(true);
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [openNavSections, setOpenNavSections] = useState<Record<string, boolean>>({
     'Knowledge Management': true,
   });
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all');
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+  const statusFilterRef = useRef<HTMLDivElement>(null);
+
+  const filteredRows = useMemo(
+    () =>
+      ROWS.filter((row) => {
+        if (!matchesSolutionSearch(row, searchQuery)) return false;
+        if (statusFilter !== 'all' && row.status !== statusFilter) return false;
+        if (activeTab === 'sop' && row.icon !== 'flow') return false;
+        if (activeTab === 'qa' && row.icon !== 'doc') return false;
+        return true;
+      }),
+    [searchQuery, statusFilter, activeTab],
+  );
+
+  useEffect(() => {
+    if (!isStatusFilterOpen) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (statusFilterRef.current && !statusFilterRef.current.contains(e.target as Node)) {
+        setIsStatusFilterOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsStatusFilterOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isStatusFilterOpen]);
 
   // handle 前缀事件处理器
   const handleTabChange = (key: TabKey) => setActiveTab(key);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+  const handleClearSearch = () => setSearchQuery('');
+  const handleStatusFilterSelect = (value: StatusFilterValue) => {
+    setStatusFilter(value);
+    setIsStatusFilterOpen(false);
+  };
   const handleLogisticsToggle = () => setIsLogisticsOpen((v) => !v);
   const handleNavToggle = () => setIsNavCollapsed((v) => !v);
   const handleNavSectionToggle = (label: string) =>
@@ -551,13 +681,40 @@ export default function SolutionManagementPage({ onEnterCanvas }: Props) {
               {/* 标题行 + 搜索框 */}
               <div className="flex gap-[4px] items-center px-[4px] shrink-0">
                 <p className="flex-1 font-medium text-[18px] text-[#333] leading-[22px]">All Solution</p>
-                <div className="bg-white border border-[#e5e5e5] flex gap-[8px] h-[32px] items-center px-[12px] py-[7px] rounded-[6px] shrink-0 w-[320px]">
-                  <div className="relative shrink-0 size-[16px]">
+                <div className="bg-white border border-[#e5e5e5] flex gap-[8px] h-[32px] items-center pl-[12px] pr-[8px] py-[7px] rounded-[6px] shrink-0 w-[320px] transition-colors focus-within:border-[#ee4d2d]">
+                  <div className="relative shrink-0 size-[16px] pointer-events-none">
                     <div className="absolute inset-[6.21%_6.23%_6.27%_6.21%]">
                       <img alt="" className="absolute block max-w-none size-full" src={CONTENT_SEARCH_ICON} />
                     </div>
                   </div>
-                  <span className="flex-1 font-normal text-[14px] text-[#b7b7b7] leading-[18px]">Search name or description</span>
+                  <input
+                    type="text"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search name or description"
+                    aria-label="Search name or description"
+                    autoComplete="off"
+                    className="flex-1 min-w-0 bg-transparent border-0 outline-none font-normal text-[14px] text-[rgba(0,0,0,0.85)] placeholder:text-[rgba(0,0,0,0.45)] leading-[22px]"
+                  />
+                  {searchQuery.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="shrink-0 flex items-center justify-center size-[22px] rounded-[4px] text-[rgba(0,0,0,0.45)] hover:text-[rgba(0,0,0,0.65)] hover:bg-gray-100 transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                        <path
+                          d="M3.5 3.5l7 7M10.5 3.5l-7 7"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -599,21 +756,67 @@ export default function SolutionManagementPage({ onEnterCanvas }: Props) {
               </div>
 
               {/* 表格卡片 — rounded-[12px] */}
-              <div className="flex-1 min-h-0 bg-white rounded-[12px] overflow-clip flex flex-col">
+              <div className="flex-1 min-h-0 rounded-[12px] overflow-auto">
+                <div className="bg-white min-w-[970px]">
                 {/* 表头 — h-[52px] bg-[#fafafa] border-b border-[#f5f5f5] */}
-                <div className="bg-[#fafafa] border-b border-[#f5f5f5] h-[52px] flex items-center shrink-0">
-                  <div className="flex items-center p-[12px] w-[400px] shrink-0">
+                <div className="bg-[#fafafa] border-b border-[#f5f5f5] h-[52px] flex items-stretch overflow-visible relative z-20">
+                  <div className="flex items-center p-[12px] w-[320px] shrink-0">
                     <span className="font-normal text-[14px] text-[#595959] whitespace-nowrap">Data</span>
                   </div>
-                  <div className="flex gap-[10px] items-center p-[12px] w-[90px] shrink-0">
-                    <span className="font-normal text-[14px] text-[#595959] whitespace-nowrap">Status</span>
-                    <div className="overflow-clip relative shrink-0 size-[14px]">
-                      <div className="absolute inset-[15.04%_10.93%_15.04%_10.94%]">
-                        <img alt="" className="absolute block max-w-none size-full" src={CONTENT_FILTER_ICON} />
+                  <div
+                    ref={statusFilterRef}
+                    className="relative flex h-full min-h-[52px] items-stretch w-[180px] shrink-0"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setIsStatusFilterOpen((v) => !v)}
+                      className={`flex flex-1 gap-[6px] items-center justify-start min-w-0 px-[12px] py-0 rounded-[4px] transition-colors ${
+                        isStatusFilterOpen ? 'bg-[#f5f5f5]' : 'hover:bg-[#f5f5f5]'
+                      } ${statusFilter !== 'all' ? 'text-[#ee4d2d]' : 'text-[#595959]'}`}
+                      aria-expanded={isStatusFilterOpen}
+                      aria-haspopup="listbox"
+                      aria-label="Filter by status"
+                    >
+                      <span
+                        className={`font-normal text-[14px] whitespace-nowrap truncate ${
+                          statusFilter !== 'all' ? 'font-medium' : ''
+                        }`}
+                      >
+                        Status
+                      </span>
+                      <div className="overflow-clip relative shrink-0 size-[14px]">
+                        <div className="absolute inset-[15.04%_10.93%_15.04%_10.94%]">
+                          <img alt="" className="absolute block max-w-none size-full" src={CONTENT_FILTER_ICON} />
+                        </div>
                       </div>
-                    </div>
+                    </button>
+                    {isStatusFilterOpen && (
+                      <ul
+                        role="listbox"
+                        className="absolute left-[8px] top-[calc(100%-2px)] z-[60] min-w-[136px] list-none m-0 rounded-[6px] border border-[#e8e8e8] bg-white p-[8px] flex flex-col gap-[4px] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                      >
+                        {STATUS_FILTER_OPTIONS.map((opt) => {
+                          const selected = statusFilter === opt.value;
+                          return (
+                            <li key={opt.value} role="option" aria-selected={selected} className="min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => handleStatusFilterSelect(opt.value)}
+                                className={`w-full text-left px-[8px] py-[8px] font-normal text-[14px] leading-[22px] transition-colors rounded-[4px] ${
+                                  selected
+                                    ? 'bg-[#fff5f0] text-[#ee4d2d] font-medium'
+                                    : 'text-[rgba(0,0,0,0.85)] hover:bg-[#fafafa]'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </div>
-                  <div className="flex gap-[10px] items-center p-[12px] w-[220px] shrink-0">
+                  <div className="flex gap-[10px] items-center p-[12px] w-[148px] shrink-0">
                     <span className="font-normal text-[14px] text-[#595959] whitespace-nowrap">Related Issue</span>
                     <div className="relative shrink-0 size-[14px]">
                       <img alt="" className="absolute block max-w-none size-full" src={CONTENT_TABLE_ICON} />
@@ -623,67 +826,80 @@ export default function SolutionManagementPage({ onEnterCanvas }: Props) {
                     <span className="font-normal text-[14px] text-[#595959] whitespace-nowrap">Updated Time</span>
                     <SorterIcon />
                   </div>
-                  <div className="flex items-center p-[12px] w-[128px] shrink-0">
+                  <div className="sticky right-0 z-30 flex items-center justify-start p-[12px] w-[174px] h-full shrink-0 bg-[#fafafa] border-l border-[#f5f5f5] shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.06)]">
                     <span className="font-normal text-[14px] text-[#595959] whitespace-nowrap">Actions</span>
                   </div>
                 </div>
 
                 {/* 表格主体 */}
-                <div className="flex-1 overflow-y-auto">
-                  {ROWS.map((row) => (
+                <div>
+                  {filteredRows.length === 0 ? (
+                    <div className="flex items-center justify-center py-[48px] px-[16px] font-normal text-[14px] leading-[22px] text-[rgba(0,0,0,0.45)]">
+                      No matching solutions
+                    </div>
+                  ) : (
+                  filteredRows.map((row) => (
                     <div
                       key={row.id}
-                      className={`border-b border-[#f5f5f5] flex items-center py-[16px] transition-colors ${
+                      className={`group border-b border-[#f5f5f5] flex items-center transition-colors ${
                         row.isAfterEDD ? 'hover:bg-[#fff5f0] cursor-pointer' : 'hover:bg-[#fafafa]'
                       }`}
                       onClick={() => handleRowClick(row)}
                     >
-                      {/* 数据列 — w-[400px] */}
-                      <div className="flex gap-[8px] h-[52px] items-center px-[12px] w-[400px] shrink-0">
+                      {/* 数据列 — w-[320px] */}
+                      <div className="flex gap-[8px] h-[84px] items-center px-[12px] w-[320px] shrink-0">
                         <KnowledgeIcon type={row.icon} />
                         <div className="flex flex-1 flex-col gap-[4px] min-w-0">
-                          <p className="capitalize font-normal text-[14px] text-[#333] overflow-hidden text-ellipsis whitespace-nowrap leading-[16px]">
-                            {row.title}
+                          <p className="capitalize font-normal text-[14px] text-[rgba(0,0,0,0.85)] overflow-hidden text-ellipsis whitespace-nowrap leading-[16px]">
+                            {highlightSearchTerms(row.title, searchQuery)}
                           </p>
                           <p className="font-normal text-[12px] text-[rgba(0,0,0,0.45)] overflow-hidden text-ellipsis whitespace-nowrap leading-[16px]">
-                            {row.subtitle}
+                            {highlightSearchTerms(row.subtitle, searchQuery)}
                           </p>
                         </div>
                       </div>
-                      {/* 状态列 — w-[90px] */}
-                      <div className="flex h-[52px] items-center px-[12px] w-[90px] shrink-0">
-                        <span className={`font-normal text-[12px] leading-[16px] px-[4px] py-px rounded-[2px] ${
-                          row.status === 'Live'
-                            ? 'bg-[#e6f7ff] text-[#1890ff]'
-                            : 'bg-[#f5f5f5] text-[rgba(0,0,0,0.85)]'
+                      {/* 状态列 — w-[180px] */}
+                      <div className="flex h-[84px] items-center px-[12px] w-[180px] shrink-0">
+                        <span className={`font-normal text-[12px] leading-[16px] px-[4px] py-px rounded-[2px] whitespace-nowrap ${
+                          row.status === 'Live'             ? 'bg-[#e6f7ff] text-[#1890ff]' :
+                          row.status === 'Archive'          ? 'bg-[#f9f0ff] text-[#722ed1]' :
+                          row.status === 'Offline'          ? 'bg-[#f5f5f5] text-[rgba(0,0,0,0.85)]' :
+                          row.status === 'Publish In Review'? 'bg-[#e6fffb] text-[#13c2c2]' :
+                          row.status === 'Rejected'         ? 'bg-[#fff1f0] text-[#f5222d]' :
+                          row.status === 'Publish'          ? 'bg-[#f6ffed] text-[#52c41a]' :
+                                                              'bg-[#f5f5f5] text-[rgba(0,0,0,0.85)]'
                         }`}>
                           {row.status}
                         </span>
                       </div>
-                      {/* 关联 Issue — w-[220px] */}
-                      <div className="flex h-[52px] items-center px-[12px] w-[220px] shrink-0">
+                      {/* 关联 Issue — w-[148px] */}
+                      <div className="flex h-[84px] items-center px-[12px] w-[148px] shrink-0">
                         <p className="font-normal text-[14px] text-[rgba(0,0,0,0.85)] overflow-hidden text-ellipsis whitespace-nowrap">
-                          {row.relatedIssue}
+                          {highlightSearchTerms(row.relatedIssue, searchQuery)}
                         </p>
                       </div>
                       {/* 更新时间 — w-[148px] */}
-                      <div className="flex h-[52px] items-center px-[12px] w-[148px] shrink-0">
+                      <div className="flex h-[84px] items-center px-[12px] w-[148px] shrink-0">
                         <p className="font-normal text-[14px] text-[#666] overflow-hidden text-ellipsis whitespace-nowrap leading-[16px]">
                           {row.updatedTime}
                         </p>
                       </div>
-                      {/* 操作列 */}
-                      <div className="flex gap-[12px] h-[52px] items-center px-[12px] shrink-0">
-                        <button className="font-normal text-[14px] text-[#2673dd] leading-[16px] hover:opacity-80 transition-opacity">View</button>
-                        <button
-                          className="font-normal text-[14px] text-[#2673dd] leading-[16px] hover:opacity-80 transition-opacity"
-                          onClick={(e) => handleEditClick(e, row)}
-                        >
-                          Edit
-                        </button>
-                        <button className="font-normal text-[14px] text-[#2673dd] leading-[16px] hover:opacity-80 transition-opacity">Versions</button>
-                        <div className="flex items-center justify-center shrink-0 size-[16px]">
-                          <div className="-rotate-90 flex-none">
+                      {/* 操作列 — sticky 贴齐滚动容器右缘 */}
+                      <div
+                        className={`sticky right-0 z-10 flex h-[84px] flex-row items-center w-[174px] shrink-0 border-l border-[#f5f5f5] bg-white shadow-[-6px_0_12px_-6px_rgba(0,0,0,0.06)] ${
+                          row.isAfterEDD ? 'group-hover:bg-[#fff5f0]' : 'group-hover:bg-[#fafafa]'
+                        }`}
+                      >
+                        <div className="flex gap-[12px] h-full items-center px-[12px]">
+                          <button className="font-normal text-[14px] text-[#2673dd] leading-[16px] hover:opacity-80 transition-opacity">View</button>
+                          <button
+                            className="font-normal text-[14px] text-[#2673dd] leading-[16px] hover:opacity-80 transition-opacity"
+                            onClick={(e) => handleEditClick(e, row)}
+                          >
+                            Edit
+                          </button>
+                          <button className="font-normal text-[14px] text-[#2673dd] leading-[16px] hover:opacity-80 transition-opacity">Versions</button>
+                          <div className="flex items-center justify-center shrink-0 size-[16px]">
                             <div className="overflow-clip relative size-[16px]">
                               <div className="absolute inset-[17.09%_44.53%_17.29%_44.53%]">
                                 <img alt="" className="absolute block max-w-none size-full" src={CONTENT_MORE_VEC} />
@@ -693,7 +909,9 @@ export default function SolutionManagementPage({ onEnterCanvas }: Props) {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
+                </div>
                 </div>
               </div>
 

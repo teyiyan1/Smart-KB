@@ -64,12 +64,11 @@ const NODE_CATEGORIES: { category: string; nodes: NodeTypeOption[] }[] = [
     nodes: [
       {
         label: 'Condition Node',
-        nodeType: 'agent',
+        nodeType: 'condition',
         icon: <ForkIcon />,
         nodeData: {
           title: 'Condition Node',
-          type: 'agent',
-          options: [{ id: 'opt-1', label: 'Option 1' }],
+          options: [{ id: 'default', label: 'Default' }],
         },
       },
       {

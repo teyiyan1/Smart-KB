@@ -8,6 +8,19 @@ export const initialNodes: Node[] = [
     data: {},
   },
   {
+    id: 'condition-1',
+    type: 'condition',
+    position: { x: 50, y: 500 },
+    data: {
+      title: 'Days Since Delivery Done',
+      options: [
+        { id: 'gt-30', label: '>=30D' },
+        { id: 'lt-30', label: '<30D' },
+        { id: 'default', label: 'Default' },
+      ],
+    },
+  },
+  {
     id: 'check-integrated',
     type: 'agent',
     position: { x: 200, y: 250 },

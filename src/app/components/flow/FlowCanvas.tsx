@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -35,9 +35,10 @@ import { AnimatePresence, motion } from 'motion/react';
 import StartNode from './nodes/StartNode';
 import AgentNode from './nodes/AgentNode';
 import AnswerNode from './nodes/AnswerNode';
+import ConditionNode from './nodes/ConditionNode';
 import CustomEdge from './CustomEdge';
 import { initialNodes, initialEdges } from './initialData';
-import NodePannel from './NodePanel';
+import NodePannel, { type NodePanelSavePayload } from './NodePanel';
 import TopBar from './TopBar';
 import ActionBarOther from './ActionBarOther';
 import { NodeHoverHighlightProvider, useNodeHoverHighlight } from './NodeHoverHighlightContext';
@@ -46,7 +47,8 @@ const nodeTypes = {
   start: StartNode,
   agent: AgentNode,
   answer: AnswerNode,
-  clarification: AgentNode, // Reuse same component
+  clarification: AgentNode,
+  condition: ConditionNode,
 };
 
 const connectionLineStyle = {
@@ -72,6 +74,18 @@ const DRAWER_WIDTH_MAX = 720;
 const DRAWER_CANVAS_MIN_VISIBLE = 220;
 /** 侧栏不超过视口比例（与 max 取较小） */
 const DRAWER_MAX_VIEWPORT_RATIO = 0.88;
+
+
+function buildAgentOptionsFromLabels(
+  labels: string[],
+): { id: string; label: string; isEnd?: boolean }[] {
+  const branches = labels.map((label, idx) => {
+    if (idx === 0) return { id: 'gt-30', label, isEnd: true as const };
+    if (idx === 1) return { id: 'lt-30', label };
+    return { id: `branch-${idx}`, label };
+  });
+  return [...branches, { id: 'default', label: 'Default' }];
+}
 
 function getDrawerWidthBounds(): { min: number; max: number } {
   const vw = window.innerWidth;
@@ -130,6 +144,7 @@ const FlowCanvasInner = ({ onBack }: { onBack?: () => void }) => {
 
   // Drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [drawerWidth, setDrawerWidth] = useState(() => clampDrawerWidth(DRAWER_WIDTH_DEFAULT));
   const [isResizingDrawer, setIsResizingDrawer] = useState(false);
   const [drawerBounds, setDrawerBounds] = useState(() => getDrawerWidthBounds());
@@ -277,12 +292,49 @@ const FlowCanvasInner = ({ onBack }: { onBack?: () => void }) => {
      return () => clearInterval(interval);
   }, [getZoom]);
 
-  // Handle Node Click
+  // Handle Node Click — open drawer for condition nodes (and legacy EDD node)
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    if (node.id === 'days-since-delivery') {
+    if (node.type === 'condition' || node.id === 'days-since-delivery') {
+      setEditingNodeId(node.id);
       setIsDrawerOpen(true);
     }
   }, []);
+
+  const nodePanelSeed = useMemo(() => {
+    if (!isDrawerOpen || !editingNodeId) return null;
+    const n = nodes.find((nn) => nn.id === editingNodeId);
+    // condition 节点：始终展示面板初始状态，不读取节点存储数据
+    if (n?.type === 'condition') return null;
+    // 兼容旧 EDD 节点
+    if (!n?.data || typeof n.data !== 'object') return null;
+    const d = n.data as { title?: string; options?: { id: string; label: string }[] };
+    const opts = d.options ?? [];
+    return {
+      title: typeof d.title === 'string' ? d.title : '',
+      conditionLabels: opts.filter((o) => o.id !== 'default').map((o) => o.label),
+    };
+  }, [isDrawerOpen, editingNodeId, nodes]);
+
+  const handleNodePanelSave = useCallback(
+    (payload: NodePanelSavePayload) => {
+      if (!editingNodeId) return;
+      setNodes((nds) => {
+        const nextNodes = nds.map((n) => {
+          if (n.id !== editingNodeId) return n;
+          const nextData = {
+            ...(n.data as Record<string, unknown>),
+            title: payload.title,
+            options: buildAgentOptionsFromLabels(payload.conditionLabels),
+          };
+          return { ...n, data: nextData };
+        });
+        takeSnapshot(nextNodes, edges);
+        return nextNodes;
+      });
+      setIsDrawerOpen(false);
+    },
+    [editingNodeId, edges, setNodes, takeSnapshot],
+  );
 
   // connectionDragThreshold=0：按下即进入连线，拖拽视觉（橙圆/+、目标光晕）立即生效
   return (
@@ -383,7 +435,11 @@ const FlowCanvasInner = ({ onBack }: { onBack?: () => void }) => {
                 />
               </div>
               <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-                <NodePannel onCancel={() => setIsDrawerOpen(false)} />
+                <NodePannel
+                  seed={nodePanelSeed}
+                  onCancel={() => setIsDrawerOpen(false)}
+                  onSave={handleNodePanelSave}
+                />
               </div>
             </motion.div>
           )}
