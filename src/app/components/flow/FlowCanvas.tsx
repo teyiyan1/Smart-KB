@@ -318,22 +318,41 @@ const FlowCanvasInner = ({ onBack }: { onBack?: () => void }) => {
   const handleNodePanelSave = useCallback(
     (payload: NodePanelSavePayload) => {
       if (!editingNodeId) return;
-      setNodes((nds) => {
-        const nextNodes = nds.map((n) => {
-          if (n.id !== editingNodeId) return n;
-          const nextData = {
-            ...(n.data as Record<string, unknown>),
-            title: payload.title,
-            options: buildAgentOptionsFromLabels(payload.conditionLabels),
-          };
-          return { ...n, data: nextData };
+      if (payload.clearedFunction) {
+        const nextNodes = nodes.map((n) =>
+          n.id === editingNodeId
+            ? {
+                ...n,
+                type: 'condition',
+                data: {
+                  title: 'Condition Node',
+                  options: [{ id: 'default', label: 'Default' }],
+                },
+              }
+            : n,
+        );
+        const nextEdges = edges.filter((e) => e.source !== editingNodeId);
+        setNodes(nextNodes);
+        setEdges(nextEdges);
+        takeSnapshot(nextNodes, nextEdges);
+      } else {
+        setNodes((nds) => {
+          const nextNodes = nds.map((n) => {
+            if (n.id !== editingNodeId) return n;
+            const nextData = {
+              ...(n.data as Record<string, unknown>),
+              title: payload.title,
+              options: buildAgentOptionsFromLabels(payload.conditionLabels),
+            };
+            return { ...n, data: nextData };
+          });
+          takeSnapshot(nextNodes, edges);
+          return nextNodes;
         });
-        takeSnapshot(nextNodes, edges);
-        return nextNodes;
-      });
+      }
       setIsDrawerOpen(false);
     },
-    [editingNodeId, edges, setNodes, takeSnapshot],
+    [editingNodeId, edges, nodes, setEdges, setNodes, takeSnapshot],
   );
 
   // connectionDragThreshold=0：按下即进入连线，拖拽视觉（橙圆/+、目标光晕）立即生效

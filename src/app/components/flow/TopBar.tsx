@@ -54,7 +54,10 @@ function SearchBar() {
     <div className="content-stretch flex items-start relative rounded-[4px] shrink-0 w-[250px]">
       {/* Fixed module */}
       <div className="bg-white content-stretch flex gap-[8px] h-[32px] items-center pl-[12px] pr-[8px] py-[7px] relative rounded-bl-[6px] rounded-tl-[6px] shrink-0">
-        <div aria-hidden="true" className="absolute border border-[#e5e5e5] border-solid inset-0 pointer-events-none rounded-bl-[6px] rounded-tl-[6px]" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-bl-[6px] rounded-tl-[6px] border-solid border-[#e5e5e5] border-b border-l border-r border-t"
+        />
         <span className="font-normal leading-[16px] text-[#333] text-[14px]">Node Text</span>
         <div className="relative shrink-0 size-[16px]">
           <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
@@ -64,7 +67,10 @@ function SearchBar() {
       </div>
       {/* Search input */}
       <div className="bg-white content-stretch flex gap-[8px] h-[32px] items-center pr-[8px] relative rounded-br-[6px] rounded-tr-[6px] shrink-0 w-[142px]">
-        <div aria-hidden="true" className="absolute border border-[#e5e5e5] border-solid inset-0 pointer-events-none rounded-br-[6px] rounded-tr-[6px]" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-br-[6px] rounded-tr-[6px] border-solid border-[#e5e5e5] border-b border-r border-t"
+        />
         <div className="relative shrink-0 size-[16px] ml-2">
           <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
             <path clipRule="evenodd" d={svgPaths.p1e91cf80} fill="#333333" fillRule="evenodd" />

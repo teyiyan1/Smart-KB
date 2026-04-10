@@ -1060,7 +1060,12 @@ function Assignment() {
   );
 }
 
-export type NodePanelSavePayload = { title: string; conditionLabels: string[] };
+export type NodePanelSavePayload = {
+  title: string;
+  conditionLabels: string[];
+  /** 已移除函数：画布恢复为新建 Condition 占位节点 */
+  clearedFunction?: boolean;
+};
 
 export default function NodePannel({
   onCancel,
@@ -1076,10 +1081,20 @@ export default function NodePannel({
   const [conditionsSynced, setConditionsSynced] = useState(false);
 
   useEffect(() => {
-    if (!seed?.title) return;
+    if (!seed) {
+      setSelectedFn(null);
+      return;
+    }
     const matched = FL_FUNCTIONS.find((f) => f.name === seed.title);
-    if (matched) setSelectedFn(matched);
-  }, [seed?.title]);
+    if (matched) {
+      setSelectedFn(matched);
+      return;
+    }
+    // 画布卡片标题常为「EDD Exceeded」等展示文案，与函数库名称「Days Since Delivery Done」不一致，仍需带出已绑定的函数与条件
+    const edd =
+      FL_FUNCTIONS.find((f) => f.name === 'Days Since Delivery Done') ?? FL_FUNCTIONS[0];
+    setSelectedFn(edd);
+  }, [seed]);
 
   const conditionKey = seed && seed.conditionLabels.length > 0
     ? `seed:${seed.conditionLabels.join('|')}`
@@ -1099,11 +1114,19 @@ export default function NodePannel({
   }, []);
 
   const handleSave = () => {
-    if (!onSave || !selectedFn) return;
-    const labels = conditionsSynced
-      ? conditionRows.map((r) => r.label)
-      : (initialConditionLabels ?? []);
-    onSave({ title: selectedFn.name, conditionLabels: labels });
+    if (!onSave) return;
+    const title = selectedFn?.name ?? seed?.title ?? '';
+    const labels =
+      selectedFn != null
+        ? conditionsSynced
+          ? conditionRows.map((r) => r.label)
+          : (initialConditionLabels ?? [])
+        : (seed?.conditionLabels ?? []);
+    onSave({
+      title,
+      conditionLabels: labels,
+      clearedFunction: selectedFn === null,
+    });
   };
 
   return (
@@ -1139,7 +1162,7 @@ export default function NodePannel({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!selectedFn}
+            disabled={!onSave}
             className="content-stretch flex h-[32px] items-center overflow-clip px-[16px] py-[6px] relative rounded-[8px] shadow-[0px_2px_0px_0px_rgba(0,0,0,0.02)] shrink-0 cursor-pointer bg-[#ee4d2d] text-white hover:bg-[#d63f20] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="font-normal text-[14px] text-white">Save</span>
