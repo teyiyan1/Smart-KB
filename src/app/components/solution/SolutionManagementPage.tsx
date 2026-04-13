@@ -193,15 +193,52 @@ function highlightSearchTerms(text: string, raw: string): React.ReactNode {
   }
 }
 
-// Figma 导航图标资源（有效期 7 天）
-const FIGMA_ICON_KB_DEFAULT  = 'https://www.figma.com/api/mcp/asset/6dd0d78e-d05f-4de4-a5f0-5ebf7a24f523';
-const FIGMA_ICON_KB_ACTIVE   = 'https://www.figma.com/api/mcp/asset/c27fdb74-20b1-47b5-9ecb-be1c01c06001';
-const FIGMA_ICON_API_BG      = 'https://www.figma.com/api/mcp/asset/13d8b0ca-9b66-4ebd-8e5c-881e6a20046f';
-const FIGMA_ICON_API_VEC     = 'https://www.figma.com/api/mcp/asset/0c8adc3f-6956-418a-99ac-a24eb0ca9c00';
-const FIGMA_ICON_ACCESS      = 'https://www.figma.com/api/mcp/asset/04b70340-cd77-4e32-96a4-879ff4b27ec9';
-const FIGMA_ICON_APPROVAL    = 'https://www.figma.com/api/mcp/asset/90b5b416-96e7-49dc-be46-3a01aa18c05a';
-const FIGMA_ICON_SETTING_BG  = 'https://www.figma.com/api/mcp/asset/758f31db-176f-46ff-bd61-93039b2c5009';
-const FIGMA_ICON_SETTING_OVL = 'https://www.figma.com/api/mcp/asset/7accff08-f6a0-4e9f-8a8e-038df867ebed';
+// 导航图标资源（本地）
+import iconKbDefault  from '@/assets/icons/figma/kb-default.svg';
+import iconKbActive   from '@/assets/icons/figma/kb-active.svg';
+import iconApiBg      from '@/assets/icons/figma/api-bg.svg';
+import iconApiVec     from '@/assets/icons/figma/api-vec.svg';
+import iconAccess     from '@/assets/icons/figma/access.svg';
+import iconApproval   from '@/assets/icons/figma/approval.svg';
+import iconSettingBg  from '@/assets/icons/figma/setting-bg.svg';
+import iconSettingOvl from '@/assets/icons/figma/setting-ovl.svg';
+import iconExpKm          from '@/assets/icons/figma/exp-km.svg';
+import iconExpApiBg       from '@/assets/icons/figma/exp-api-bg.svg';
+import iconExpApiVec      from '@/assets/icons/figma/exp-api-vec.svg';
+import iconExpAccessVec   from '@/assets/icons/figma/exp-access-vec.svg';
+import iconExpApproval    from '@/assets/icons/figma/exp-approval.svg';
+import iconExpSettingOvl  from '@/assets/icons/figma/exp-setting-ovl.svg';
+import iconExpLac         from '@/assets/icons/figma/exp-lac.svg';
+import iconExpChevron     from '@/assets/icons/figma/exp-chevron.svg';
+import iconMenufoldVec    from '@/assets/icons/figma/menufold-vec.svg';
+import iconHeaderLogo     from '@/assets/icons/figma/header-logo.svg';
+import iconHeaderDots     from '@/assets/icons/figma/header-dots.svg';
+import iconContentPlus        from '@/assets/icons/figma/content-plus.svg';
+import iconContentArrowDown   from '@/assets/icons/figma/content-arrow-down.svg';
+import iconContentSearch      from '@/assets/icons/figma/content-search.svg';
+import iconContentFilter      from '@/assets/icons/figma/content-filter.svg';
+import iconContentTable       from '@/assets/icons/figma/content-table.svg';
+import iconContentSorterUp    from '@/assets/icons/figma/content-sorter-up.svg';
+import iconContentSorterDown  from '@/assets/icons/figma/content-sorter-down.svg';
+import iconContentMore        from '@/assets/icons/figma/content-more.svg';
+import iconContentFlow        from '@/assets/icons/figma/content-flow.svg';
+import iconContentFaq1        from '@/assets/icons/figma/content-faq1.svg';
+import iconContentFaq2        from '@/assets/icons/figma/content-faq2.svg';
+import iconContentFaq3        from '@/assets/icons/figma/content-faq3.svg';
+import iconContentFaq4        from '@/assets/icons/figma/content-faq4.svg';
+import iconPaginPrev          from '@/assets/icons/figma/pagin-prev.svg';
+import iconPaginNext          from '@/assets/icons/figma/pagin-next.svg';
+import iconPaginMore          from '@/assets/icons/figma/pagin-more.svg';
+import iconPaginArrow         from '@/assets/icons/figma/pagin-arrow.svg';
+
+const FIGMA_ICON_KB_DEFAULT  = iconKbDefault;
+const FIGMA_ICON_KB_ACTIVE   = iconKbActive;
+const FIGMA_ICON_API_BG      = iconApiBg;
+const FIGMA_ICON_API_VEC     = iconApiVec;
+const FIGMA_ICON_ACCESS      = iconAccess;
+const FIGMA_ICON_APPROVAL    = iconApproval;
+const FIGMA_ICON_SETTING_BG  = iconSettingBg;
+const FIGMA_ICON_SETTING_OVL = iconSettingOvl;
 
 function NavSectionIcon({ label, isActive }: { label: string; isActive: boolean }) {
   switch (label) {
@@ -265,37 +302,36 @@ function NavSectionIcon({ label, isActive }: { label: string; isActive: boolean 
   }
 }
 
-// 展开态导航 section header 图标资源（有效期 7 天）
-const EXP_ICON_KM          = 'https://www.figma.com/api/mcp/asset/40988f64-d24c-4e87-9256-6acccc9355e9';
-const EXP_ICON_API_BG      = 'https://www.figma.com/api/mcp/asset/584f60dd-57fb-4ee7-9d5e-14d23d404bcb';
-const EXP_ICON_API_VEC     = 'https://www.figma.com/api/mcp/asset/3e284942-2451-4b50-8157-59371c5d3037';
-const EXP_ICON_ACCESS_VEC  = 'https://www.figma.com/api/mcp/asset/b0bf2f20-2dc2-4a92-b88f-2ee3c358a327';
-const EXP_ICON_APPROVAL    = 'https://www.figma.com/api/mcp/asset/6f6e6c5e-5d10-4659-9925-fa945ba2f12d';
-const EXP_ICON_SETTING_OVL = 'https://www.figma.com/api/mcp/asset/e6feaefd-07cf-48a5-bb75-fc84a0e6963c';
-const EXP_ICON_LAC         = 'https://www.figma.com/api/mcp/asset/4378f05b-2197-4e05-a36f-88af8e547265';
-const EXP_CHEVRON          = 'https://www.figma.com/api/mcp/asset/df93c9d6-f134-43d8-9a95-a5c49a7b865b';
-const FIGMA_MENUFOLD_VEC   = 'https://www.figma.com/api/mcp/asset/3b1479ec-5032-4c6c-9a2e-2e1647ac4608';
-const FIGMA_HEADER_LOGO    = 'https://www.figma.com/api/mcp/asset/eba7610b-f45c-45d0-87fc-894ffd930875';
-const FIGMA_HEADER_DOTS    = 'https://www.figma.com/api/mcp/asset/7d98f650-2d29-49df-9d9a-b227a31d27ae';
+// 展开态 / 内容区图标（本地）
+const EXP_ICON_KM          = iconExpKm;
+const EXP_ICON_API_BG      = iconExpApiBg;
+const EXP_ICON_API_VEC     = iconExpApiVec;
+const EXP_ICON_ACCESS_VEC  = iconExpAccessVec;
+const EXP_ICON_APPROVAL    = iconExpApproval;
+const EXP_ICON_SETTING_OVL = iconExpSettingOvl;
+const EXP_ICON_LAC         = iconExpLac;
+const EXP_CHEVRON          = iconExpChevron;
+const FIGMA_MENUFOLD_VEC   = iconMenufoldVec;
+const FIGMA_HEADER_LOGO    = iconHeaderLogo;
+const FIGMA_HEADER_DOTS    = iconHeaderDots;
 
-// 主内容区 Figma 资源 — node 12984-44526（有效期 7 天）
-const CONTENT_PLUS_VEC    = 'https://www.figma.com/api/mcp/asset/87712a36-a81b-4bcd-9c50-9550dc21e7ad';
-const CONTENT_ARROW_DOWN  = 'https://www.figma.com/api/mcp/asset/4e7a2057-f1df-4124-bc1d-de7a04be554d';
-const CONTENT_SEARCH_ICON = 'https://www.figma.com/api/mcp/asset/036436d5-498c-4448-85d2-b2abefd45726';
-const CONTENT_FILTER_ICON = 'https://www.figma.com/api/mcp/asset/65f8360a-0e29-4df8-a59d-e1f111352091';
-const CONTENT_TABLE_ICON  = 'https://www.figma.com/api/mcp/asset/db675947-ea90-4b14-a152-c361e158f114';
-const CONTENT_SORTER_UP   = 'https://www.figma.com/api/mcp/asset/7b2fc693-16f2-4230-bf16-979a35f6cd02';
-const CONTENT_SORTER_DOWN = 'https://www.figma.com/api/mcp/asset/7b2bded6-a3e8-4669-bac6-a5c075533557';
-const CONTENT_MORE_VEC    = 'https://www.figma.com/api/mcp/asset/55010b2f-b495-4b96-b374-fcf53b26ff38';
-const CONTENT_FLOW_ICON   = 'https://www.figma.com/api/mcp/asset/72d1a0d2-99f1-4470-a387-a8bffdca6650';
-const CONTENT_FAQ_VEC1    = 'https://www.figma.com/api/mcp/asset/387819a0-e34f-4bec-af71-d7140e8d35ab';
-const CONTENT_FAQ_VEC2    = 'https://www.figma.com/api/mcp/asset/1a26be56-4618-40f5-9d27-d97a23b75d12';
-const CONTENT_FAQ_VEC3    = 'https://www.figma.com/api/mcp/asset/0e75de1c-3ff8-4afd-bddb-9a763a0305f8';
-const CONTENT_FAQ_VEC4    = 'https://www.figma.com/api/mcp/asset/342dc47d-50c5-4ecf-8986-c28603bd4039';
-const CONTENT_PAGIN_PREV  = 'https://www.figma.com/api/mcp/asset/802d439b-49ac-4621-b014-91f2422a9398';
-const CONTENT_PAGIN_NEXT  = 'https://www.figma.com/api/mcp/asset/739413e3-163d-45a2-8836-7fa82cbf2168';
-const CONTENT_PAGIN_MORE  = 'https://www.figma.com/api/mcp/asset/deb9a8fd-424c-4162-af93-d18d3e1b652f';
-const CONTENT_PAGIN_ARROW = 'https://www.figma.com/api/mcp/asset/31fa5bd5-97be-446b-9de2-0be2d4fcccb4';
+const CONTENT_PLUS_VEC    = iconContentPlus;
+const CONTENT_ARROW_DOWN  = iconContentArrowDown;
+const CONTENT_SEARCH_ICON = iconContentSearch;
+const CONTENT_FILTER_ICON = iconContentFilter;
+const CONTENT_TABLE_ICON  = iconContentTable;
+const CONTENT_SORTER_UP   = iconContentSorterUp;
+const CONTENT_SORTER_DOWN = iconContentSorterDown;
+const CONTENT_MORE_VEC    = iconContentMore;
+const CONTENT_FLOW_ICON   = iconContentFlow;
+const CONTENT_FAQ_VEC1    = iconContentFaq1;
+const CONTENT_FAQ_VEC2    = iconContentFaq2;
+const CONTENT_FAQ_VEC3    = iconContentFaq3;
+const CONTENT_FAQ_VEC4    = iconContentFaq4;
+const CONTENT_PAGIN_PREV  = iconPaginPrev;
+const CONTENT_PAGIN_NEXT  = iconPaginNext;
+const CONTENT_PAGIN_MORE  = iconPaginMore;
+const CONTENT_PAGIN_ARROW = iconPaginArrow;
 
 function NavSectionHeaderIcon({ label }: { label: string }) {
   switch (label) {

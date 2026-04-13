@@ -133,14 +133,25 @@ function NodeTitle() {
   );
 }
 
-// ─── Edit Function Modal assets (Figma node 3316-115437) ──────────────────────
-const EF_QUESTION_ICON = 'https://www.figma.com/api/mcp/asset/c6b22975-5d7d-4942-be1e-f66f95707d25';
-const EF_CLOSE_ICON    = 'https://www.figma.com/api/mcp/asset/5ce15efe-104b-4dd7-a829-9aeeefb3f49d';
-const EF_COPY_ICON     = 'https://www.figma.com/api/mcp/asset/c50be622-5f6c-4e34-82ed-62027f7247eb';
-const EF_DELETE_ICON   = 'https://www.figma.com/api/mcp/asset/c4cf9d36-8b40-45c0-96df-35b87274b349';
-const EF_ARROW_DOWN    = 'https://www.figma.com/api/mcp/asset/c233789b-a460-4423-b90c-bf683a6599d5';
-const EF_PLUS_ICON     = 'https://www.figma.com/api/mcp/asset/b7f73d1d-6465-445f-b84e-52aeb8fa4028';
-const EF_WARNING_ICON  = 'https://www.figma.com/api/mcp/asset/0aa7916c-37b5-441c-91c8-ce393911c8e8';
+// ─── Edit Function Modal assets (local) ───────────────────────────────────────
+import efQuestionIcon from '@/assets/icons/figma/ef-question.svg';
+import efCloseIcon    from '@/assets/icons/figma/ef-close.svg';
+import efCopyIcon     from '@/assets/icons/figma/ef-copy.svg';
+import efDeleteIcon   from '@/assets/icons/figma/ef-delete.svg';
+import efArrowDown    from '@/assets/icons/figma/ef-arrow-down.svg';
+import efPlusIcon     from '@/assets/icons/figma/ef-plus.svg';
+import efWarningIcon  from '@/assets/icons/figma/ef-warning.svg';
+import flCloseIcon    from '@/assets/icons/figma/fl-close.svg';
+import flSearchIcon   from '@/assets/icons/figma/fl-search.svg';
+import flFxIcon       from '@/assets/icons/figma/fl-fx.svg';
+
+const EF_QUESTION_ICON = efQuestionIcon;
+const EF_CLOSE_ICON    = efCloseIcon;
+const EF_COPY_ICON     = efCopyIcon;
+const EF_DELETE_ICON   = efDeleteIcon;
+const EF_ARROW_DOWN    = efArrowDown;
+const EF_PLUS_ICON     = efPlusIcon;
+const EF_WARNING_ICON  = efWarningIcon;
 
 function EfRadio({ selected }: { selected?: boolean }) {
   return (
@@ -678,10 +689,10 @@ function SortableConditionRow({ condition, onDelete }: { condition: { id: string
   );
 }
 
-// Figma 资源 — Function Library Modal（node 3045-57917，有效期 7 天）
-const FL_CLOSE_ICON  = 'https://www.figma.com/api/mcp/asset/a8e7615e-3d4c-4abd-a6c0-456aaa4e2298';
-const FL_SEARCH_ICON = 'https://www.figma.com/api/mcp/asset/02eea5df-fb15-477d-bb69-a1de16387137';
-const FL_FX_ICON     = 'https://www.figma.com/api/mcp/asset/9e09b414-1c9e-4350-a8a3-d40fc21139cb';
+// Function Library Modal assets (local)
+const FL_CLOSE_ICON  = flCloseIcon;
+const FL_SEARCH_ICON = flSearchIcon;
+const FL_FX_ICON     = flFxIcon;
 
 const FL_CATEGORIES = [
   { key: 'all',          label: 'All  function',      count: 225 },
